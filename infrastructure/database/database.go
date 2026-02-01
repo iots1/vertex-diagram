@@ -45,27 +45,23 @@ func GetMongoClient(uri string) (*mongo.Client, error) {
 	return clientInstance, mongoError
 }
 
-// CreateIndexes creates indexes for tables and relationships collections
+// CreateIndexes creates indexes for all collections with diagram_id foreign key
 func CreateIndexes(db *mongo.Database) error {
-	// Index for tables collection
-	_, err := db.Collection("tables").Indexes().CreateOne(
-		context.Background(),
-		mongo.IndexModel{
-			Keys: bson.D{{Key: "diagram_id", Value: 1}},
-		},
-	)
-	if err != nil {
-		return err
+	collections := []string{"tables", "relationships", "dependencies", "areas", "custom_types", "notes", "diagram_filters"}
+
+	for _, collectionName := range collections {
+		_, err := db.Collection(collectionName).Indexes().CreateOne(
+			context.Background(),
+			mongo.IndexModel{
+				Keys: bson.D{{Key: "diagram_id", Value: 1}},
+			},
+		)
+		if err != nil {
+			return err
+		}
 	}
 
-	// Index for relationships collection
-	_, err = db.Collection("relationships").Indexes().CreateOne(
-		context.Background(),
-		mongo.IndexModel{
-			Keys: bson.D{{Key: "diagram_id", Value: 1}},
-		},
-	)
-	return err
+	return nil
 }
 
 // CloseMongoDB ปิด Connection เมื่อจบโปรแกรม

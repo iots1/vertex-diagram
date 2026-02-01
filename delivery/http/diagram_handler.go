@@ -52,12 +52,18 @@ func (h *DiagramHandler) GetByID(c *fiber.Ctx) error {
 func (h *DiagramHandler) Save(c *fiber.Ctx) error {
 	var d domain.Diagram
 	if err := c.BodyParser(&d); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		log.Printf("❌ Error parsing diagram body: %v", err)
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body: " + err.Error()})
 	}
+
+	log.Printf("📝 Saving diagram: ID=%s, Name=%s", d.ID, d.Name)
 
 	result, err := h.AUsecase.Save(c.Context(), &d)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		log.Printf("❌ Error saving diagram: %v", err)
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to save diagram: " + err.Error()})
 	}
+
+	log.Printf("✅ Diagram saved successfully: ID=%s", result.ID)
 	return c.JSON(result)
 }

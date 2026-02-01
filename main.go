@@ -32,6 +32,11 @@ func main() {
 	diagramCol := db.Collection("diagrams")
 	tableCol := db.Collection("tables")
 	relationshipCol := db.Collection("relationships")
+	dependencyCol := db.Collection("dependencies")
+	areaCol := db.Collection("areas")
+	customTypeCol := db.Collection("custom_types")
+	noteCol := db.Collection("notes")
+	diagramFilterCol := db.Collection("diagram_filters")
 	configCol := db.Collection("config")
 
 	// Create indexes for tables and relationships collections
@@ -55,8 +60,13 @@ func main() {
 	diagramRepo := repository.NewMongoRepository(diagramCol)
 	tableRepo := repository.NewMongoTableRepository(tableCol)
 	relationshipRepo := repository.NewMongoRelationshipRepository(relationshipCol)
+	dependencyRepo := repository.NewMongoDependencyRepository(dependencyCol)
+	areaRepo := repository.NewMongoAreaRepository(areaCol)
+	customTypeRepo := repository.NewMongoCustomTypeRepository(customTypeCol)
+	noteRepo := repository.NewMongoNoteRepository(noteCol)
+	diagramFilterRepo := repository.NewMongoDiagramFilterRepository(diagramFilterCol)
 
-	uc := usecase.NewDiagramUsecase(diagramRepo, tableRepo, relationshipRepo, 5*time.Second)
+	uc := usecase.NewDiagramUsecase(diagramRepo, tableRepo, relationshipRepo, dependencyRepo, areaRepo, customTypeRepo, noteRepo, diagramFilterRepo, 5*time.Second)
 	http.NewDiagramHandler(app, uc)
 
 	// Global Config

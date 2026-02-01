@@ -7,11 +7,11 @@ import (
 
 // Entity หลักของระบบ
 type Diagram struct {
-	ID        string      `bson:"_id,omitempty" json:"id"`
-	Name      string      `bson:"name" json:"name"`
-	Content   interface{} `bson:"content" json:"content"` // JSON ก้อนใหญ่ของ ChartDB
-	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	ID        string                 `bson:"_id,omitempty" json:"id"`
+	Name      string                 `bson:"name" json:"name"`
+	Content   map[string]interface{} `bson:"content" json:"content"` // JSON ก้อนใหญ่ของ ChartDB
+	UpdatedAt time.Time              `bson:"updated_at" json:"updated_at"`
+	CreatedAt time.Time              `bson:"created_at" json:"created_at"`
 }
 
 // Repository Interface: สัญญาว่าต้องทำอะไรกับ DB ได้บ้าง

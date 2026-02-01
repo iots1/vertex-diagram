@@ -78,21 +78,41 @@ func (m *mongoRepository) Store(ctx context.Context, d *domain.Diagram) error {
 		filter = bson.M{"_id": oid}
 	}
 
-	opts := options.Replace().SetUpsert(true)
-	_, err := m.Conn.ReplaceOne(ctx, filter, d, opts)
+	// Use UpdateOne with $set to avoid replacing _id field
+	update := bson.M{
+		"$set": bson.M{
+			"name":       d.Name,
+			"content":    d.Content,
+			"created_at": d.CreatedAt,
+			"updated_at": d.UpdatedAt,
+		},
+	}
+
+	opts := options.Update().SetUpsert(true)
+	_, err := m.Conn.UpdateOne(ctx, filter, update, opts)
 	return err
 }
 
 func (m *mongoRepository) Update(ctx context.Context, d *domain.Diagram) error {
 	d.UpdatedAt = time.Now()
-	
+
 	filter := bson.M{"_id": d.ID}
 	if oid, oerr := primitive.ObjectIDFromHex(d.ID); oerr == nil {
 		filter = bson.M{"_id": oid}
 	}
 
-	opts := options.Replace().SetUpsert(true)
-	_, err := m.Conn.ReplaceOne(ctx, filter, d, opts)
+	// Use UpdateOne with $set to avoid replacing _id field
+	update := bson.M{
+		"$set": bson.M{
+			"name":       d.Name,
+			"content":    d.Content,
+			"created_at": d.CreatedAt,
+			"updated_at": d.UpdatedAt,
+		},
+	}
+
+	opts := options.Update().SetUpsert(true)
+	_, err := m.Conn.UpdateOne(ctx, filter, update, opts)
 	return err
 }
 
