@@ -1,0 +1,56 @@
+# --- Binaries & Build Results ---
+# ไฟล์ที่เกิดจากการ compile (Main program)
+main
+main.exe
+
+# ไฟล์ Binary นามสกุลต่างๆ
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary (เกิดจาก go test -c)
+*.test
+
+# Output ของ coverage tool
+*.out
+
+# โฟลเดอร์ที่มักใช้เก็บ Build output (ถ้ามี)
+bin/
+dist/
+
+# --- Dependency Directories ---
+# โดยปกติ Go Modules จะไม่เก็บ vendor ขึ้น git (ยกเว้นคุณตั้งใจใช้ go mod vendor)
+vendor/
+
+# --- Go Workspace (Go 1.18+) ---
+go.work
+go.work.sum
+
+# --- IDE & Editors ---
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains (GoLand)
+.idea/
+*.iml
+
+# --- OS Specific Files ---
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- Environment Variables & Secrets (สำคัญมาก!) ---
+# ห้ามเอาไฟล์ที่มีรหัสผ่านหรือ Key ขึ้น Git เด็ดขาด
+.env
+.env.local
+.env.*.local
+*.pem
