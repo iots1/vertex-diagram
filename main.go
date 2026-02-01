@@ -27,15 +27,23 @@ func main() {
 	// อย่าลืมปิด DB เมื่อปิดโปรแกรม
 	defer database.CloseMongoDB()
 
-	// เลือก Database และ Collection
+	// Select Database and Collections
 	db := dbClient.Database(cfg.DBName)
-	col := db.Collection("diagrams")
+	diagramCol := db.Collection("diagrams")
+	tableCol := db.Collection("tables")
+	relationshipCol := db.Collection("relationships")
+	configCol := db.Collection("config")
+
+	// Create indexes for tables and relationships collections
+	if err := database.CreateIndexes(db); err != nil {
+		log.Fatalf("❌ Failed to create indexes: %v", err)
+	}
 
 	// 2. Initialize Fiber Web Server with larger body limit for big SQL diagrams
 	app := fiber.New(fiber.Config{
 		BodyLimit: 50 * 1024 * 1024, // 50MB
 	})
-	
+
 	// Config CORS
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*", // More flexible for development
@@ -44,12 +52,14 @@ func main() {
 
 	// 4. Clean Architecture Wiring
 	// Repo -> Usecase -> Handler
-	repo := repository.NewMongoRepository(col)
-	uc := usecase.NewDiagramUsecase(repo, 5*time.Second)
+	diagramRepo := repository.NewMongoRepository(diagramCol)
+	tableRepo := repository.NewMongoTableRepository(tableCol)
+	relationshipRepo := repository.NewMongoRelationshipRepository(relationshipCol)
+
+	uc := usecase.NewDiagramUsecase(diagramRepo, tableRepo, relationshipRepo, 5*time.Second)
 	http.NewDiagramHandler(app, uc)
 
 	// Global Config
-	configCol := db.Collection("config")
 	configRepo := repository.NewMongoConfigRepository(configCol)
 	configUc := usecase.NewConfigUsecase(configRepo, 5*time.Second)
 	http.NewConfigHandler(app, configUc)

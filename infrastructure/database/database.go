@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -42,6 +43,29 @@ func GetMongoClient(uri string) (*mongo.Client, error) {
 	})
 
 	return clientInstance, mongoError
+}
+
+// CreateIndexes creates indexes for tables and relationships collections
+func CreateIndexes(db *mongo.Database) error {
+	// Index for tables collection
+	_, err := db.Collection("tables").Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys: bson.D{{Key: "diagram_id", Value: 1}},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	// Index for relationships collection
+	_, err = db.Collection("relationships").Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys: bson.D{{Key: "diagram_id", Value: 1}},
+		},
+	)
+	return err
 }
 
 // CloseMongoDB ปิด Connection เมื่อจบโปรแกรม
