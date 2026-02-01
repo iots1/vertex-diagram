@@ -37,7 +37,7 @@ func (u *diagramUsecase) Save(c context.Context, d *domain.Diagram) (*domain.Dia
 
 	// Logic: ถ้า ID ว่าง หรือ เป็น Zero Value -> Create
 	// ถ้ามี ID -> Update
-	if d.ID.IsZero() {
+	if d.ID == "" {
         if d.Name == "" { d.Name = "Untitled Diagram" }
 		err := u.diagramRepo.Store(ctx, d)
 		return d, err
@@ -45,4 +45,10 @@ func (u *diagramUsecase) Save(c context.Context, d *domain.Diagram) (*domain.Dia
 		err := u.diagramRepo.Update(ctx, d)
 		return d, err
 	}
+}
+
+func (u *diagramUsecase) Delete(c context.Context, id string) error {
+	ctx, cancel := context.WithTimeout(c, u.contextTimeout)
+	defer cancel()
+	return u.diagramRepo.Delete(ctx, id)
 }

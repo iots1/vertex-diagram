@@ -27,7 +27,7 @@ func (m *mongoRepository) Fetch(ctx context.Context) ([]domain.Diagram, error) {
 	if err != nil {
 		return nil, err
 	}
-	var diagrams []domain.Diagram
+	diagrams := make([]domain.Diagram, 0)
 	if err = cursor.All(ctx, &diagrams); err != nil {
 		return nil, err
 	}
@@ -35,26 +35,79 @@ func (m *mongoRepository) Fetch(ctx context.Context) ([]domain.Diagram, error) {
 }
 
 func (m *mongoRepository) GetByID(ctx context.Context, id string) (*domain.Diagram, error) {
-	oid, _ := primitive.ObjectIDFromHex(id)
 	var d domain.Diagram
-	err := m.Conn.FindOne(ctx, bson.M{"_id": oid}).Decode(&d)
-	return &d, err
+	// 1. Try string ID
+	err := m.Conn.FindOne(ctx, bson.M{"_id": id}).Decode(&d)
+	if err == nil {
+		return &d, nil
+	}
+
+	// 2. Try ObjectID
+	if oid, oerr := primitive.ObjectIDFromHex(id); oerr == nil {
+		err = m.Conn.FindOne(ctx, bson.M{"_id": oid}).Decode(&d)
+		if err == nil {
+			return &d, nil
+		}
+	}
+
+	return nil, err
 }
 
 func (m *mongoRepository) Store(ctx context.Context, d *domain.Diagram) error {
-	d.CreatedAt = time.Now()
-	d.UpdatedAt = time.Now()
-	res, err := m.Conn.InsertOne(ctx, d)
-	if err == nil {
-		d.ID = res.InsertedID.(primitive.ObjectID)
+	if d.CreatedAt.IsZero() {
+		d.CreatedAt = time.Now()
 	}
+	d.UpdatedAt = time.Now()
+
+	if d.ID == "" {
+		res, err := m.Conn.InsertOne(ctx, d)
+		if err == nil {
+			if oid, ok := res.InsertedID.(primitive.ObjectID); ok {
+				d.ID = oid.Hex()
+			} else if sid, ok := res.InsertedID.(string); ok {
+				d.ID = sid
+			}
+		}
+		return err
+	}
+
+	// For Upsert, we must handle both ID types in filter
+	filter := bson.M{"_id": d.ID}
+	if oid, oerr := primitive.ObjectIDFromHex(d.ID); oerr == nil {
+		// Use ObjectID if possible for better compatibility with server-side generated IDs
+		filter = bson.M{"_id": oid}
+	}
+
+	opts := options.Replace().SetUpsert(true)
+	_, err := m.Conn.ReplaceOne(ctx, filter, d, opts)
 	return err
 }
 
 func (m *mongoRepository) Update(ctx context.Context, d *domain.Diagram) error {
 	d.UpdatedAt = time.Now()
+	
 	filter := bson.M{"_id": d.ID}
-	update := bson.M{"$set": d}
-	_, err := m.Conn.UpdateOne(ctx, filter, update)
+	if oid, oerr := primitive.ObjectIDFromHex(d.ID); oerr == nil {
+		filter = bson.M{"_id": oid}
+	}
+
+	opts := options.Replace().SetUpsert(true)
+	_, err := m.Conn.ReplaceOne(ctx, filter, d, opts)
+	return err
+}
+
+func (m *mongoRepository) Delete(ctx context.Context, id string) error {
+	// Try string ID
+	res, err := m.Conn.DeleteOne(ctx, bson.M{"_id": id})
+	if err == nil && res.DeletedCount > 0 {
+		return nil
+	}
+
+	// Try ObjectID
+	if oid, oerr := primitive.ObjectIDFromHex(id); oerr == nil {
+		_, err = m.Conn.DeleteOne(ctx, bson.M{"_id": oid})
+		return err
+	}
+	
 	return err
 }
