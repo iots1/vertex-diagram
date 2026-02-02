@@ -7,15 +7,15 @@ import (
 
 // Dependency represents a table dependency in a diagram
 type Dependency struct {
-	ID                  string    `bson:"_id,omitempty" json:"id"`
+	ID                  string    `bson:"_id,omitempty" json:"mongoId"`
 	DiagramID           string    `bson:"diagram_id" json:"diagram_id"` // FK to diagrams
-	DependencyID        string    `bson:"dependency_id" json:"dependency_id"` // ID from diagram
+	DependencyID        string    `bson:"dependency_id" json:"id"`      // ID from diagram - returned as "id" for frontend
 	Schema              string    `bson:"schema" json:"schema"`
-	TableID             string    `bson:"table_id" json:"table_id"`
-	DependentSchema     string    `bson:"dependent_schema" json:"dependent_schema"`
-	DependentTableID    string    `bson:"dependent_table_id" json:"dependent_table_id"`
-	CreatedAt           time.Time `bson:"created_at" json:"created_at"`
-	UpdatedAt           time.Time `bson:"updated_at" json:"updated_at"`
+	TableID             string    `bson:"table_id" json:"tableId"`      // Convert to camelCase in JSON
+	DependentSchema     string    `bson:"dependent_schema" json:"dependentSchema"` // Convert to camelCase in JSON
+	DependentTableID    string    `bson:"dependent_table_id" json:"dependentTableId"` // Convert to camelCase in JSON
+	CreatedAt           time.Time `bson:"created_at" json:"createdAt"` // Convert to camelCase in JSON
+	UpdatedAt           time.Time `bson:"updated_at" json:"updatedAt"` // Convert to camelCase in JSON
 }
 
 // DependencyRepository defines methods for dependency data access

@@ -7,9 +7,9 @@ import (
 
 // Table represents a database table in a diagram
 type Table struct {
-	ID        string                   `bson:"_id,omitempty" json:"id"`
+	ID        string                   `bson:"_id,omitempty" json:"mongoId"`
 	DiagramID string                   `bson:"diagram_id" json:"diagram_id"` // FK to diagrams
-	TableID   string                   `bson:"table_id" json:"table_id"`     // ID from diagram
+	TableID   string                   `bson:"table_id" json:"id"`           // ID from diagram - returned as "id" for frontend
 	Name      string                   `bson:"name" json:"name"`
 	Schema    string                   `bson:"schema" json:"schema"`
 	Fields    []map[string]interface{} `bson:"fields" json:"fields"`         // Array of field objects
@@ -19,8 +19,8 @@ type Table struct {
 	Y         int                      `bson:"y" json:"y"`
 	IsView    bool                     `bson:"isView" json:"isView"`
 	Order     int                      `bson:"order" json:"order"`
-	CreatedAt time.Time                `bson:"created_at" json:"created_at"`
-	UpdatedAt time.Time                `bson:"updated_at" json:"updated_at"`
+	CreatedAt time.Time                `bson:"created_at" json:"createdAt"`
+	UpdatedAt time.Time                `bson:"updated_at" json:"updatedAt"`
 }
 
 // TableRepository defines methods for table data access

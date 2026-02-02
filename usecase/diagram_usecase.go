@@ -108,6 +108,9 @@ func (u *diagramUsecase) GetOne(c context.Context, id string) (*domain.Diagram, 
 		diagram.Content = make(map[string]interface{})
 	}
 
+	log.Printf("  📦 Merging %d tables, %d relationships, %d dependencies, %d areas, %d custom types, %d notes",
+		len(tables), len(relationships), len(dependencies), len(areas), len(customTypes), len(notes))
+
 	diagram.Content["tables"] = tables
 	diagram.Content["relationships"] = relationships
 	diagram.Content["dependencies"] = dependencies
@@ -116,6 +119,13 @@ func (u *diagramUsecase) GetOne(c context.Context, id string) (*domain.Diagram, 
 	diagram.Content["notes"] = notes
 	if diagramFilter != nil {
 		diagram.Content["diagramFilter"] = diagramFilter
+	}
+
+	// Debug: log first relationship if exists
+	if len(relationships) > 0 {
+		log.Printf("    First relationship: ID=%s, sourceTableId=%s, targetTableId=%s, sourceCard=%s, targetCard=%s",
+			relationships[0].RelationshipID, relationships[0].SourceTableID, relationships[0].TargetTableID,
+			relationships[0].SourceCardinality, relationships[0].TargetCardinality)
 	}
 
 	return diagram, nil
@@ -283,6 +293,8 @@ func (u *diagramUsecase) saveRelationships(ctx context.Context, d *domain.Diagra
 		return nil
 	}
 
+	log.Printf("    Found %d relationships to save", len(relationshipsData))
+
 	// Delete old relationships first
 	if err := u.relationshipRepo.DeleteByDiagramID(ctx, d.ID); err != nil {
 		return err
@@ -290,22 +302,26 @@ func (u *diagramUsecase) saveRelationships(ctx context.Context, d *domain.Diagra
 
 	// Extract and save new relationships
 	relationships := make([]domain.Relationship, 0)
-	for _, rd := range relationshipsData {
+	for i, rd := range relationshipsData {
 		relMap, ok := rd.(map[string]interface{})
 		if !ok {
+			log.Printf("    ⚠️  Relationship %d: failed to convert to map", i)
 			continue
 		}
 
 		rel := domain.Relationship{
-			DiagramID:      d.ID,
-			RelationshipID: getStringValue(relMap, "id"),
-			Name:           getStringValue(relMap, "name"),
-			SourceTableID:  getStringValue(relMap, "sourceTableId"),
-			TargetTableID:  getStringValue(relMap, "targetTableId"),
-			SourceFieldID:  getStringValue(relMap, "sourceFieldId"),
-			TargetFieldID:  getStringValue(relMap, "targetFieldId"),
-			Type:           getStringValue(relMap, "type"),
+			DiagramID:         d.ID,
+			RelationshipID:    getStringValue(relMap, "id"),
+			Name:              getStringValue(relMap, "name"),
+			SourceTableID:     getStringValue(relMap, "sourceTableId"),
+			TargetTableID:     getStringValue(relMap, "targetTableId"),
+			SourceFieldID:     getStringValue(relMap, "sourceFieldId"),
+			TargetFieldID:     getStringValue(relMap, "targetFieldId"),
+			Type:              getStringValue(relMap, "type"),
+			SourceCardinality: getStringValueWithDefault(relMap, "sourceCardinality", "many"),
+			TargetCardinality: getStringValueWithDefault(relMap, "targetCardinality", "one"),
 		}
+		log.Printf("    Relationship %d: ID=%s, sourceTableId=%s, targetTableId=%s, type=%s", i, rel.RelationshipID, rel.SourceTableID, rel.TargetTableID, rel.Type)
 		relationships = append(relationships, rel)
 	}
 
@@ -575,6 +591,15 @@ func getMapArrayValue(m map[string]interface{}, key string) []map[string]interfa
 		}
 	}
 	return []map[string]interface{}{}
+}
+
+func getStringValueWithDefault(m map[string]interface{}, key string, defaultValue string) string {
+	if v, ok := m[key]; ok {
+		if s, ok := v.(string); ok && s != "" {
+			return s
+		}
+	}
+	return defaultValue
 }
 
 func (u *diagramUsecase) Delete(c context.Context, id string) error {
