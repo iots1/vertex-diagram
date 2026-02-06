@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: vertex_diagram_api
+    restart: always
+    ports:
+      - "8082:8080"
+    environment:
+      PORT: 8080
+
+      MONGO_URI: mongodb://root:my_password@mongodb_sandbox:27017/?authSource=admin
+
+      # ตั้งชื่อ DB
+      DB_NAME: vertex_db
+
+    networks:
+      - mongodb-sandbox-net
+
+# เรียกใช้ Network ภายนอกที่สร้างไว้แล้ว
+networks:
+  mongodb-sandbox-net:
+    external: true

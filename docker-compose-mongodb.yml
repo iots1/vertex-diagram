@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  mongodb-sandbox:
+    image: mongo:8.0
+    container_name: mongodb_sandbox
+    restart: always
+    ports:
+      - "27037:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: devhis2026
+    volumes:
+      - ./mongo_data:/data/db
+
+    # Config WiredTiger Cache (256MB)
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25", "--bind_ip_all"]
+
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          memory: 256M
+
+    networks:
+      - mongodb-sandbox-net
+
+networks:
+  mongodb-sandbox-net:
+    external: true
